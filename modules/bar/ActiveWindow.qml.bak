@@ -1,0 +1,118 @@
+import QtQuick
+import Quickshell
+import Quickshell.Io
+import Quickshell.Widgets
+import "../../globals/animations"
+
+Item {
+  id: root
+  clip: true
+  implicitWidth: icon.implicitWidth + (icon.visible ? 6 : 0) + root.current.implicitWidth
+  implicitHeight: Math.max(icon.implicitHeight, root.current.implicitHeight)
+  required property var theme
+  property string title: "Desktop"
+  property string appId: ""
+  property Text current: textOne
+  Behavior on implicitWidth {
+    SmoothWidth {}
+  }
+
+  Process {
+    id: focusPoll
+    command: ["niri", "msg", "--json", "focused-window"]
+    running: true
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          const win = JSON.parse(this.text);
+          const newTitle = win.title || "(Untitled)";
+          const newAppId = win.app_id || "";
+
+          if (newTitle !== root.title) {
+            const next = root.current === textOne ? textTwo : textOne;
+            next.text = newTitle;
+            root.current = next;
+            root.title = newTitle;
+            root.appId = newAppId;
+          }
+        } catch (_) {}
+      }
+    }
+  }
+
+  Timer {
+    interval: 500
+    running: true
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: focusPoll.running = true
+  }
+
+  IconImage {
+    id: icon
+    anchors.left: parent.left
+    anchors.verticalCenter: parent.verticalCenter
+    visible: root.appId !== ""
+    source: root.appId ? Quickshell.iconPath(root.appId) : ""
+    implicitSize: 24
+  }
+
+  Text {
+    id: textOne
+    text: "Desktop"
+    anchors.left: icon.visible ? icon.right : parent.left
+    anchors.leftMargin: icon.visible ? 6 : 0
+    anchors.verticalCenter: parent.verticalCenter
+    color: root.theme.text
+    font.pointSize: 12
+    elide: Text.ElideRight
+    opacity: root.current === textOne ? 1 : 0
+    width: implicitWidth
+    Behavior on opacity {
+      SmoothWidth {
+        duration: 300
+      }
+    }
+  }
+
+  Text {
+    id: textTwo
+    anchors.left: icon.visible ? icon.right : parent.left
+    anchors.leftMargin: icon.visible ? 6 : 0
+    anchors.verticalCenter: parent.verticalCenter
+    color: root.theme.text
+    font.pointSize: 12
+    elide: Text.ElideRight
+    opacity: root.current === textTwo ? 1 : 0
+    width: implicitWidth
+    Behavior on opacity {
+      SmoothWidth {
+        duration: 300
+      }
+    }
+  }
+
+  //  RowLayout {
+  //    id: row
+  //    anchors.fill: parent
+  //    spacing: 6
+  //
+  //    IconImage {
+  //      id: icon
+  //      visible: root.appId !== ""
+  //      source: root.appId ? Quickshell.iconPath(root.appId) : ""
+  //      implicitSize: 24
+  //      Layout.alignment: Qt.AlignVCenter
+  //    }
+  //
+  //    Text {
+  //      id: activeTitle
+  //      // text: root.title
+  //      opacity: 1
+  //      color: root.theme.text
+  //      elide: Text.ElideRight
+  //      Layout.alignment: Qt.AlignVCenter
+  //      font.pointSize: 12
+  //    }
+  //  }
+}

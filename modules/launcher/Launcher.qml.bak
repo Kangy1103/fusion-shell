@@ -1,0 +1,157 @@
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Widgets
+import Quickshell.Wayland
+import ".."
+
+PopupWindow {
+  Colours {id: colour}
+  id: launcher
+  property font baseFont: Qt.font({ family: "JetBrainsMono Nerd Font", pointSize: 14 })
+  property font titleFont: Qt.font({ family: "JetBrainsMono Nerd Font", pointSize: 18, weight: Font.Bold })
+
+  // Cycling launcher messages
+  property list<var> prompts: [
+    { icon: Qt.resolvedUrl("../../icons/dragon-radar.png"), text: "Dragon Radar" },
+    { icon: Qt.resolvedUrl("../../icons/9000.png"),         text: "IT'S OVER 9000!!!" },
+    { icon: Qt.resolvedUrl("../../icons/scouter.png"),      text: "What does your scouter say?" }
+  ]
+  property int promptIndex: 0
+  // End
+
+  required property QtObject anchorWindow
+
+  signal appLaunched
+
+  grabFocus: true
+  visible: false
+  implicitWidth: 1000
+  implicitHeight: 600
+  surfaceFormat.opaque: false
+
+  BackgroundEffect.blurRegion: Region {
+    item: blurRect
+  }
+
+  
+
+  anchor {
+    window: anchorWindow
+    rect.x: anchorWindow.width / 2 - width / 2
+    rect.y: (screen.height - height) / 2
+  }
+
+  onVisibleChanged: {
+    if (visible) {
+      searchField.forceActiveFocus();
+      promptIndex = Math.floor(Math.random() * prompts.length);
+    }
+  }
+
+  Rectangle {
+    id: blurRect
+    anchors.fill: parent
+    color: colour.bgTransparent
+    radius: 28
+    border.width: 2
+    border.color: colour.borderTransparent
+
+    ColumnLayout {
+      anchors.fill: parent
+      anchors.margins: 25
+
+      RowLayout {
+        Layout.fillWidth: true
+        
+        // The > before the search placeholder text
+        Image {
+          source: launcher.prompts[launcher.promptIndex].icon
+          sourceSize.width: 38
+          sourceSize.height: 38
+          Layout.rightMargin: 8
+          Layout.alignment: Qt.AlignVCenter
+        }
+       
+        TextInput {
+          id: searchField
+          focus: true
+          color: colour.text
+          font: launcher.baseFont
+          Layout.fillWidth: true
+          Keys.onEscapePressed: launcher.visible = false
+
+          // Search bar text
+          Text {
+            anchors.fill: parent
+            text: launcher.prompts[launcher.promptIndex].text
+            color: colour.text
+            font.italic: true
+            visible: !parent.text
+            Layout.alignment: Qt.AlignVCenter
+          }
+        }
+      }
+
+      // Divider between search and apps
+      Image {
+        source: Qt.resolvedUrl("../../icons/gogeta-divider.png")
+        Layout.fillWidth: true
+        Layout.topMargin: 0
+        Layout.bottomMargin: 0
+        Layout.preferredHeight: 50
+        fillMode: Image.PreserveAspectFit
+      }
+      
+      ListView {
+        id: appList
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        clip: true
+        
+        // The app list
+        model: DesktopEntries.applications.values
+        delegate: Rectangle {
+          id: wrapper
+          implicitHeight: 36
+          implicitWidth: ListView.view.width
+          height: visible ? implicitHeight : 0
+          radius: 8
+          color: ma.containsMouse ? colour.hoverBgTransparent : "transparent"
+          visible: searchField.text.length === 0 || modelData.name.toLowerCase().includes(searchField.text.toLowerCase())
+
+          RowLayout {
+            anchors.fill: parent
+            
+            // App icons
+            IconImage {
+              source: Quickshell.iconPath(modelData.icon)
+              implicitSize: 36
+              Layout.alignment: Qt.AlignVCenter
+            }
+            
+            // App name
+            Text {
+              text: modelData.name
+              color: ma.containsMouse ? colour.hoverText : colour.text
+              font: launcher.baseFont
+              Layout.fillWidth: true
+              Layout.alignment: Qt.AlignVCenter
+            }
+          }
+          
+          // The clicky to open
+          MouseArea {
+            id: ma
+            anchors.fill: parent
+            hoverEnabled: true
+            onClicked: {
+              modelData.execute();
+              appLaunched();
+            }
+          }
+        }
+      }
+    }
+  }
+}

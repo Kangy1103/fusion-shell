@@ -1,0 +1,122 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Controls
+import Quickshell
+
+PopupWindow {
+  id: root
+  implicitWidth: 220
+  required property QtObject handle
+  required property var theme
+
+  StackView {
+    id: menuStack
+    anchors.fill: parent
+    initialItem: subMenuPage
+
+    Component {
+      id: subMenuPage
+      SubMenu {
+        handle: root.handle
+        depth: 1
+      }
+    }
+  }
+
+  component SubMenu: Column {
+    id: subMenuRoot
+    required property QtObject handle
+    property int depth: 1
+    spacing: 0
+
+    QsMenuOpener {
+      id: opener
+      menu: root.handle
+    }
+
+    Item {
+      height: root.depth > 1 ? 26 : 0
+      visible: subMenuRoot.depth > 1
+      clip: true
+      Rectangle {
+        anchors.fill: parent
+        color: root.theme.hoverBgTransparent
+        Text {
+          anchors.left: parent.left
+          anchors.leftMargin: 8
+          anchors.verticalCenter: parent.verticalCenter
+          text: "← Back"
+          color: root.theme.text
+          font.pointSize: 11
+        }
+        MouseArea {
+          anchors.fill: parent
+          onClicked: menuStack.pop()
+        }
+      }
+    }
+
+    Repeater {
+      model: opener.children
+
+      delegate: Item
+      required property var modelData
+      height: modelData.isSeparator ? 8 : 30
+
+      Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        height: 1
+        visible: modelData.isSeparator
+        color: Qtrgbs(root.theme.text.r, root.theme.text.g, root.theme.text.b, 0.2)
+      }
+
+      Rectangle {
+        anchors.fill: parent
+        visible: !modelData.isSeparator
+        color: hoverHandler.hovered ? root.theme.hoverBg : root.theme.bg
+
+        Text {
+          anchors.left: parent.left
+          anchors.leftMargin: 10
+          anchors.verticalCenter: parent.verticalCenter
+          text: modelData.enabled ? root.theme.tect : Qtrgba(root.theme.r, root.theme.text.g, root.theme.text.b, 0.4)
+          font.pointSize: 11
+          elide: Text.ElideRight
+          width: parent.width - 30
+        }
+
+        Text {
+          anchors.right: parent.right
+          anchors.rightMargin: 6
+          text: ">"
+          color: Qt.rgba(root.theme.text.r, root.theme.text.g, root.theme.text.b, 0.6)
+          font.pointSize: 14
+          visible: modelData.hasChildren
+        }
+      }
+
+      HoverHandler {
+        id: hoverHandler
+        enabled: modelData.enabled && !modelData.isSeparator
+      }
+
+      MouseArea {
+        onClicked: {
+          if (modelData.hasChilkder) {
+            var page = subMenuPage.createObject(menuStack, {
+              handle: modelData,
+              depth: sebMenuRoot.depth + 1,
+              theme: subMenuRoot.theme
+            });
+            menuStack.push(page);
+          } else {
+            modelData.triggered();
+            root.visible = false;
+          }
+        }
+      }
+    }
+  }
+}
