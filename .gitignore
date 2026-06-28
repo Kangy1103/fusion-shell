@@ -1,4 +1,5 @@
 plugin/build/
+reference-files-do-not-use-in-shell
 *.o
 *.so
 .qmlls.ini
