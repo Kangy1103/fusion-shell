@@ -28,7 +28,7 @@ PopupWindow {
     anchors.fill: parent
     color: root.theme.bg
     radius: 6
-    border.color: root.theme.borderTransparent
+    border.color: root.theme.border
     border.width: 1
   }
 
@@ -71,7 +71,7 @@ PopupWindow {
       clip: true
       Rectangle {
         anchors.fill: parent
-        color: subMenuRoot.theme.hoverBgTransparent
+        color: subMenuRoot.theme.hoverBg
         Text {
           anchors.left: parent.left
           anchors.leftMargin: 8
@@ -118,7 +118,7 @@ PopupWindow {
           anchors.verticalCenter: parent.verticalCenter
           height: 1
           visible: delegateRoot.modelData.isSeparator
-          color: root.theme.borderTransparent
+          color: root.theme.border
         }
 
         Rectangle {

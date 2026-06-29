@@ -12,6 +12,8 @@ QtObject {
   readonly property color hoverBg: "#55a1c2"
   readonly property color hoverBgTransparent: "#8055a1c2"
   readonly property color accent: "#1f3f7f"
+  readonly property color vegitoAccent: "#e09109"
+  readonly property color gogetaAccent: "#e0c009"
 }
 
 // Transparency hex values
